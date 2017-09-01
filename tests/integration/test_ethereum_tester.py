@@ -1,5 +1,4 @@
 import functools
-import sys
 
 import pytest
 
@@ -22,10 +21,20 @@ from web3.utils.module_testing.math_contract import (
     MATH_ABI,
 )
 
+from eth_tester import EthereumTester
+from eth_tester.web3 import EthereumTesterProvider
+
 
 @pytest.fixture(scope="session")
-def web3():
-    _web3 = Web3(Web3.EthereumTesterProvider())
+def eth_tester_provider():
+    eth_tester = EthereumTester()
+    provider = EthereumTesterProvider(eth_tester)
+    return provider
+
+
+@pytest.fixture(scope="session")
+def web3(eth_tester_provider):
+    _web3 = Web3(eth_tester_provider)
     return _web3
 
 
@@ -115,87 +124,32 @@ def funded_account_for_raw_txn(web3):
     return account
 
 
-class TestEthTestRPCWeb3Module(Web3ModuleTest):
+class TestEthereumTesterWeb3Module(Web3ModuleTest):
     def _check_web3_clientVersion(self, client_version):
-        assert client_version.startswith('TestRPC/')
+        assert client_version.startswith('EthereumTester/')
 
 
 def not_implemented(method, exc_type=AttributeError):
     @functools.wraps(method)
     def inner(*args, **kwargs):
-        if sys.version_info.major == 2:
-            # pytest doesn't do the right thing with the fixture arguments in
-            # python2 so just don't run it.
-            return
         with pytest.raises(exc_type):
             method(*args, **kwargs)
     return inner
 
 
-class TestEthTestRPCEthModule(EthModuleTest):
-    #
-    # Eth-Testrpc doesn't comply with RPC spec in many ways.
-    #
-    test_eth_hashrate = not_implemented(EthModuleTest.test_eth_hashrate)
-
-    test_eth_getBlockTransactionCountByHash_empty_block = not_implemented(
-        EthModuleTest.test_eth_getBlockTransactionCountByHash_empty_block,
-    )
-    test_eth_getBlockTransactionCountByNumber_empty_block = not_implemented(
-        EthModuleTest.test_eth_getBlockTransactionCountByNumber_empty_block,
-    )
-
-    test_eth_getBlockTransactionCountByHash_block_with_txn = not_implemented(
-        EthModuleTest.test_eth_getBlockTransactionCountByHash_block_with_txn,
-    )
-    test_eth_getBlockTransactionCountByNumber_block_with_txn = not_implemented(
-        EthModuleTest.test_eth_getBlockTransactionCountByNumber_block_with_txn,
-    )
-
-    test_eth_getUncleCountByBlockHash = not_implemented(
-        EthModuleTest.test_eth_getUncleCountByBlockHash,
-    )
-    test_eth_getUncleCountByBlockNumber = not_implemented(
-        EthModuleTest.test_eth_getUncleCountByBlockNumber,
-    )
-
-    test_eth_sign = not_implemented(
-        EthModuleTest.test_eth_sign,
-    )
-
-    test_eth_sendRawTransaction = not_implemented(
-        EthModuleTest.test_eth_sendRawTransaction, ValueError,
-    )
-
-    test_eth_getTransactionByBlockHashAndIndex = not_implemented(
-        EthModuleTest.test_eth_getTransactionByBlockHashAndIndex,
-    )
-    test_eth_getTransactionByBlockNumberAndIndex = not_implemented(
-        EthModuleTest.test_eth_getTransactionByBlockNumberAndIndex,
-    )
-
-    test_eth_getTransactionReceipt_unmined = not_implemented(
-        EthModuleTest.test_eth_getTransactionReceipt_unmined, AssertionError,
-    )
-
-    test_eth_newBlockFilter = not_implemented(
-        EthModuleTest.test_eth_newBlockFilter, NotImplementedError,
-    )
-
-    test_eth_newPendingTransactionFilter = not_implemented(
-        EthModuleTest.test_eth_newPendingTransactionFilter, NotImplementedError,
-    )
-
-
-class TestEthTestRPCVersionModule(VersionModuleTest):
+class TestEthereumTesterEthModule(EthModuleTest):
     pass
-
-
-class TestEthTestRPCNetModule(NetModuleTest):
-    pass
-
-
-class TestEthTestRPCPersonalModule(PersonalModuleTest):
-    test_personal_sign_and_ecrecover = not_implemented(
-        PersonalModuleTest.test_personal_sign_and_ecrecover,
-    )
+#
+#
+#class TestEthereumTesterVersionModule(VersionModuleTest):
+#    pass
+#
+#
+#class TestEthereumTesterNetModule(NetModuleTest):
+#    pass
+#
+#
+#class TestEthereumTesterPersonalModule(PersonalModuleTest):
+#    test_personal_sign_and_ecrecover = not_implemented(
+#        PersonalModuleTest.test_personal_sign_and_ecrecover,
+#    )
